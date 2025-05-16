@@ -19,7 +19,6 @@
 const char* ssid     = "RPi-JMRI";     // <-- fill in with your network name
 const char* password = "rpI-jmri";         // <-- fill in with youy network password
 const char* openLCB_can  = "openlcb-can";  // <-- change this if necessary
-//#include "PicoWifiGC.h"
 #include "ESP32WiFiGC.h"
 
 #include <Arduino.h>
@@ -36,11 +35,9 @@ const char* openLCB_can  = "openlcb-can";  // <-- change this if necessary
 
 // Set to 1 to Force Reset EEPROM to Factory Defaults 
 // Need to do this at least once.  
-#define RESET_TO_FACTORY_DEFAULTS 0
+#define RESET_TO_FACTORY_DEFAULTS 1
 
 // User defs - moved to Global.h so they are available in other files.
-// #define NUM_SENSOR 4
-// #define NUM_THRESHOLD 4
 #define NUM_EVENT NUM_SENSOR * NUM_THRESHOLD * 2 // Each threshold has two events, one for each threshold being passed.
 
 #include "mdebugging.h"           // debugging
@@ -185,8 +182,6 @@ uint8_t userState(uint16_t index) {
     // index is odd so this is a Far event.State_
     if (currentState == State::Far) return VALID; else return INVALID;
   }
-
-  // return UNKNOWN; // TO DO: === will never be called but would be useful for sensors which do not exist. ===
 }
 
 // ===== Process Consumer-eventIDs =====
@@ -251,6 +246,9 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
   setThresholds();
 }
 
+bool previousHubConnected;
+bool hubConnected;
+
 // ==== Setup does initial configuration ======================
 void setup()
 {   
@@ -279,14 +277,8 @@ void setup()
     threshold.setInitialState(i, range);
   }
 
-  // Wait for the hub to be connected.
-  while (!wifigc_process()) {}
-
-  // Turn the blue LED on.
-  digitalWrite(LED_BLUE, LOW);
-
-  // // Send events to indicate the initial state of all of the thresholds.
-  // sendInitialEvents();
+  // Ensure that the initial events are sent when the hub is connected.
+  previousHubConnected = false;
 
   dP("\n initialization finished");
 
@@ -301,14 +293,23 @@ void loop() {
   // Check for any input processing required.
   produceFromInputs();
 
-  // Check that the OpenLCB/LCC hub is still connected.
-  bool hub_connected = wifigc_process();
-  if (hub_connected) {
+  // Attempt to connect to the OpenLCB/LCC hub and reconnect if contact has been lost.
+  hubConnected = wifigc_process();
+  if (hubConnected) {
     // Turn the blue LED on.
     digitalWrite(LED_BLUE, LOW);
+
+    // Check for the hub just connected.
+    if (previousHubConnected == false) {
+      // The hub has just beem connected.
+      sendInitialEvents();
+    }
+
+    previousHubConnected = true;
   } else {
     // Turn the blue LED off.
     digitalWrite(LED_BLUE, HIGH);
+    previousHubConnected = false;
   }
 }
 
@@ -323,8 +324,6 @@ void setThresholds() {
       currentThreshold.valueFar = NODECONFIG.read(EEADDR(sensor[i].threshold[j].thresholdFar));
       currentThreshold.eventIndexNear = (i * NUM_THRESHOLD * 2) + (j * 2);
       currentThreshold.eventIndexFar = (i * NUM_THRESHOLD * 2) + (j * 2) + 1;
-      // currentThreshold.currentState = State::Far;
-      // currentThreshold.currentState = State::Unknown;
 
       threshold.set(currentThreshold);
     }
@@ -333,49 +332,14 @@ void setThresholds() {
   //threshold.print();
 }
 
-// void setInitialState() {
-//   int range;
+void sendInitialEvents() {
+  // Use the already determined state for each threshold to send appropriate events.
+  int eventToSend;
 
-//   for (uint8_t i = 0; i < NUM_SENSOR; i++) {
-//     // Take an initial reading for this sensor.
-//     range = sensor.read(i);
-
-//     Serial.printf("\nSensor %d range is %d", i, range);
-
-//     // Has the range passed a threshold for this sensor?
-//     // Check all thresholds for this sensor.
-//     for (uint8_t j = 0; j < NUM_THRESHOLD; j++) {
-//       if (range = -1) {
-//         // This sensor is not connected.
-//         threshold.thresholds.sensor[i].threshold[j].currentState = State::Unknown;
-//       }
-
-//       // eventToSend = threshold.check(i, j, range);
-//       // if (eventToSend != -1) OpenLcb.produce(eventToSend);
-//     }
-//   }
-// }
-
-// void sendInitialEvents() {
-//   int range;
-//   int eventToSend;
-
-//   for (uint8_t i = 0; i < NUM_SENSOR; i++) {
-//     // Take an initial reading for this sensor.
-//     range = sensor.read(i);
-
-//     Serial.printf("\nSensor %d range is %d", i, range);
-
-//     if (range == -1) {
-//       // This sensor is not connected.
-//       continue;
-//     }
-
-//     // Has the range passed a threshold for this sensor?
-//     // Check all thresholds for this sensor.
-//     for (uint8_t j = 0; j < NUM_THRESHOLD; j++) {
-//       eventToSend = threshold.check(i, j, range);
-//       if (eventToSend != -1) OpenLcb.produce(eventToSend);
-//     }
-//   }
-// }
+  for (uint8_t i = 0; i < NUM_SENSOR; i++) {
+    for (uint8_t j = 0; j < NUM_THRESHOLD; j++) {
+      eventToSend = threshold.getEventIndexForCurrentState(i, j);
+      if (eventToSend != -1) OpenLcb.produce(eventToSend);
+    }
+  }
+}

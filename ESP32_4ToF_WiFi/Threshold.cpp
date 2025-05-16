@@ -89,3 +89,17 @@ void Threshold::setInitialState(uint8_t sensor, int range) {
     }
   }
 }
+
+int Threshold::getEventIndexForCurrentState(uint8_t sensor, uint8_t threshold) {
+  switch (thresholds.sensor[sensor].threshold[threshold].currentState) {
+    case State::Unknown:
+      // Send no event.
+      return -1;
+
+    case State::Near:
+      return thresholds.sensor[sensor].threshold[threshold].eventIndexNear;
+
+    case State::Far:
+      return thresholds.sensor[sensor].threshold[threshold].eventIndexFar;
+  }
+}

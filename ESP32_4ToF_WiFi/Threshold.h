@@ -38,7 +38,7 @@ class Threshold {
 
     /**
      * Compares range with the current state for this threshold for this sensor and
-     * returns the index of the event to send or -1 if there is no event to be sent.
+     * Returns the index of the event to send or -1 if there is no event to be sent.
      */
     int check(uint8_t sensor, uint8_t threshold, uint8_t range);
 
@@ -51,6 +51,13 @@ class Threshold {
      * Set the state of the thresholds for this sensor.
      */
     void setInitialState(uint8_t sensor, int range);
+
+    /**
+     * Checks the current state for the threshold for the sensor.
+     * Returns the index of the event to send or -1 if there is no event to be sent.
+     */
+    // int getCurrentEvent(uint8_t sensor, uint8_t threshold);
+    int getEventIndexForCurrentState(uint8_t sensor, uint8_t threshold);
 
     /**
      * Displays all sensor information to the serial port.
