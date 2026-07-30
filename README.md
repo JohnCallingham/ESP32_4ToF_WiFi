@@ -18,13 +18,13 @@ All of the node types which share the common codebase provide the following func
 
 ## Specific functionality for this node type
 
-1. Alows for four ToF sensors to be connected.
+1. Allows for four ToF sensors to be connected.
 2. Each sensor has four thresholds.
 3. As the sensors do not provide a stable reading over time, each threshold has two parameters - a near threshold and a far threshold.
 4. An event is sent when the sensor detects that an object has become closer to it than the near threshold.
 5. An event is sent when the sensor detects that an object has become futher away than the far threshold.
 5. The configuration interace allows the user to specify the near and far thresholds by selecting a base threshold and a hysterisis value.
-6. The near thershold is calculated by subtracting half of the hysterisis value from the base threshold.
+6. The near threshold is calculated by subtracting half of the hysterisis value from the base threshold.
 7. The far threshold is calculated by adding half of the hysterisis value to the base threshold.
 
 ## Software components
