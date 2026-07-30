@@ -8,7 +8,24 @@ It is part of a group of node types which use the same codebase. The other node 
 
 ## General functionality
 
-## Detailed functionality
+All of the node types which share the common codebase provide the following functionality;-
+- Responds to consumed events and sends produced events, depending on the specific features of the node.
+- When initially connected to JMRI's LCC hub the node sends the state of all events so that JMRI knows the current state of the node.
+- Responds to queries from JMRI.
+- Allows the user to configure the ESP32's built in RGB LED to indicate various states of the node.
+- Allows the user to start various testing cycles for the node.
+- Allows for remote configuration and remote firmware updates.
+
+## Specific functionality for this node type
+
+1. Alows for four ToF sensors to be connected.
+2. Each sensor has four thresholds.
+3. As the sensors do not provide a stable reading over time, each threshold has two parameters - a near threshold and a far threshold.
+4. An event is sent when the sensor detects that an object has become closer to it than the near threshold.
+5. An event is sent when the sensor detects that an object has become futher away than the far threshold.
+5. The configuration interace allows the user to specify the near and far thresholds by selecting a base threshold and a hysterisis value.
+6. The near thershold is calculated by subtracting half of the hysterisis value from the base threshold.
+7. The far threshold is calculated by adding half of the hysterisis value to the base threshold.
 
 ## Software components
 This software uses the following components;-
@@ -24,7 +41,7 @@ The following software components are dependencies of one or more of the above c
 - [Adafruit_VL53L0X](https://github.com/adafruit/Adafruit_VL53L0X.git)
 - [Adafruit_VL6180X](https://github.com/adafruit/Adafruit_VL6180X.git)
 - [AduinoJson](https://github.com/bblanchon/ArduinoJson)
-- [LCC_NODE_CONFIGURATION_BASE]((https://github.com/JohnCallingham/LCC_NODE_COMPONENT_BASE))
+- [LCC_NODE_CONFIGURATION_BASE](https://github.com/JohnCallingham/LCC_NODE_COMPONENT_BASE)
 
 
 
