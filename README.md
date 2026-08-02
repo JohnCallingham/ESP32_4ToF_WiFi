@@ -43,7 +43,4 @@ The following software components are dependencies of one or more of the above c
 - [AduinoJson](https://github.com/bblanchon/ArduinoJson)
 - [LCC_NODE_CONFIGURATION_BASE](https://github.com/JohnCallingham/LCC_NODE_COMPONENT_BASE)
 
-
-
-The PlatformIO Library Dependency Finder handles downloading all dependencies.
-
+PlatformIO's Library Dependency Finder handles the downloading of all required dependencies.
