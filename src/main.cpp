@@ -368,9 +368,9 @@ void initialiseToFSensors() {
 
   // Start the I2C bus.
   if (Wire.begin()) {
-    Serial.printf("\n%6ld I2C initialised successfully", millis());
+    Serial.printf("\n%6ld [initialiseToFSensors] Wire.begin() successful", millis());
   } else {
-    Serial.printf("\n%6ld I2C initialisation failed", millis());
+    Serial.printf("\n%6ld [initialiseToFSensors] Wire.begin() failed", millis());
     return;
   }
 
@@ -384,7 +384,7 @@ void initialiseToFSensors() {
     retVal = Wire.endTransmission();
 
     if (retVal == 0) {
-      Serial.printf("\n%6ld Found device at I2C address 0x%02X directly connected", millis(), i2cAddress);
+      Serial.printf("\n%6ld [initialiseToFSensors] Found device at I2C address 0x%02X directly connected", millis(), i2cAddress);
       noDevices = false;
       if (i2cAddress == MULTIPLEXER_I2C_ADDRESS) {
         muxConnected = true;
@@ -393,7 +393,7 @@ void initialiseToFSensors() {
   }
 
   if (noDevices) {
-    Serial.printf("\n%6ld No I2C devices directly connected", millis());
+    Serial.printf("\n%6ld [initialiseToFSensors] No I2C devices directly connected", millis());
   }
 
   // Store pointers to the ToFSensor objects in the tofSensor array.
