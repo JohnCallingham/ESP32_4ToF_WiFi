@@ -30,7 +30,7 @@
 #define MANU "J Callingham"  // The manufacturer of node
 #define MODEL "ESP32_4ToF_Wifi" // The model of the board
 #define HWVERSION "0.1"   // Hardware version
-#define SWVERSION "1.0.1"   // Software version
+#define SWVERSION "1.0.2"   // Software version
 
 // To Reset the Node Number, Uncomment and edit the next line
 // #define NODE_ADDRESS  5,1,1,1,0x91,0x05
