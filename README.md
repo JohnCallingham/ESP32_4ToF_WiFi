@@ -42,5 +42,6 @@ The following software components are dependencies of one or more of the above c
 - [Adafruit_VL6180X](https://github.com/adafruit/Adafruit_VL6180X.git)
 - [AduinoJson](https://github.com/bblanchon/ArduinoJson)
 - [LCC_NODE_CONFIGURATION_BASE](https://github.com/JohnCallingham/LCC_NODE_COMPONENT_BASE)
+- [I2C_PERIPHERAL](https://github.com/JohnCallingham/I2C_PERIPHERAL)
 
 PlatformIO's Library Dependency Finder handles the downloading of all required dependencies.

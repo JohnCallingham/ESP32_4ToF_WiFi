@@ -40,7 +40,7 @@
 // Need to do this at least once.  
 #define RESET_TO_FACTORY_DEFAULTS 0
 
-#define NUM_SENSOR 4
+#define NUM_SENSOR 1
 #define NUM_THRESHOLD 4
 
 #define NUM_RGB_LED 3 // Red, green and blue.
@@ -87,17 +87,26 @@ uint8_t getLEDState(int switchInput);
 #include "processCAN.h"
 #include "OpenLCBHeaderJC.h"
 
-// Create four Adafruit_VL6180X or Adafruit_VL53L0X objects.
-Adafruit_VL6180X sensor0 = Adafruit_VL6180X(); // VL6180
-Adafruit_VL53L0X sensor1 = Adafruit_VL53L0X(); // VL53L0X
-Adafruit_VL53L0X sensor2 = Adafruit_VL53L0X(); // VL53L0X
-Adafruit_VL6180X sensor3 = Adafruit_VL6180X(); // VL6180
+#if NUM_SENSOR == 1
+  // Adafruit_VL6180X sensor0 = Adafruit_VL6180X(); // VL6180
+  // ToFSensorVL6180 tofSensor0(&sensor0);
+  Adafruit_VL53L0X sensor0 = Adafruit_VL53L0X();
+  ToFSensorVL53L0X tofSensor0(&sensor0);
+#endif
 
-// Create four ToFSensor objects.
-ToFSensorVL6180 tofSensor0(0, &sensor0);
-ToFSensorVL53L0X tofSensor1(1, &sensor1);
-ToFSensorVL53L0X tofSensor2(2, &sensor2);
-ToFSensorVL6180 tofSensor3(3, &sensor3);
+#if NUM_SENSOR == 4
+  // Create four Adafruit_VL6180X or Adafruit_VL53L0X objects.
+  Adafruit_VL6180X sensor0 = Adafruit_VL6180X(); // VL6180
+  Adafruit_VL53L0X sensor1 = Adafruit_VL53L0X(); // VL53L0X
+  Adafruit_VL53L0X sensor2 = Adafruit_VL53L0X(); // VL53L0X
+  Adafruit_VL6180X sensor3 = Adafruit_VL6180X(); // VL6180
+
+  // Create four ToFSensor objects.
+  ToFSensorVL6180 tofSensor0(0, &sensor0);
+  ToFSensorVL53L0X tofSensor1(1, &sensor1);
+  ToFSensorVL53L0X tofSensor2(2, &sensor2);
+  ToFSensorVL6180 tofSensor3(3, &sensor3);
+#endif
 
 // Declare an array of pointers to the ToFSensor objects.
 ToFSensor *tofSensor[NUM_SENSOR];
@@ -252,8 +261,14 @@ extern "C" {
 
     //  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
     const EIDTab eidtab[NUM_EVENT] PROGMEM = {
+#if NUM_SENSOR == 1
+        // There is one sensor.
+        REG_SENSOR(0)
+#endif
+#if NUM_SENSOR == 4
         // There are four sensors.
         REG_SENSOR(0), REG_SENSOR(1), REG_SENSOR(2), REG_SENSOR(3)
+#endif
     };
     
     // SNIP Short node description for use by the Simple Node Information Protocol
@@ -288,7 +303,7 @@ uint8_t userState(uint16_t index) {
 
 void sendEventCallbackFunction(uint16_t eventIndexToSend) {
   if (hubConnected) {
-    Serial.printf("\n%6ld sendEventCallbackFunction() called. event index=0x%02X", millis(), eventIndexToSend);
+    Serial.printf("\n%6ld [sendEventCallbackFunction] eventIndexToSend=0x%02X", millis(), eventIndexToSend);
     OpenLcb.produce(eventIndexToSend);
   }
 }
@@ -374,10 +389,12 @@ void initialiseToFSensors() {
     return;
   }
 
+#if NUM_SENSOR == 4
   // Reset the mux in case any port was selected before the ESP32 was reset.
   Wire.beginTransmission(MULTIPLEXER_I2C_ADDRESS);
   Wire.write(0);
   Wire.endTransmission();
+#endif
 
   for (int i2cAddress = 0x01; i2cAddress < 0x7F; i2cAddress++) {
     Wire.beginTransmission(i2cAddress);
@@ -397,13 +414,25 @@ void initialiseToFSensors() {
   }
 
   // Store pointers to the ToFSensor objects in the tofSensor array.
+#if NUM_SENSOR == 1
+  tofSensor[0] = &tofSensor0;
+#endif
+
+#if NUM_SENSOR == 4
   tofSensor[0] = &tofSensor0;
   tofSensor[1] = &tofSensor1;
   tofSensor[2] = &tofSensor2;
   tofSensor[3] = &tofSensor3;
+#endif
 
   // Initialise all tofSensor objects.
   for (uint8_t i=0; i<NUM_SENSOR; i++) {
+#if NUM_SENSOR == 1
+    Serial.printf("\n%6ld [initialiseToFSensors] Initialising ToF sensor directly connected", millis());
+#endif
+#if NUM_SENSOR == 4
+    Serial.printf("\n%6ld [initialiseToFSensors] Initialising ToF sensor %d", millis(), i);
+#endif
     tofSensor[i]->setSendEventCallbackFunction(sendEventCallbackFunction);
 
     for (uint8_t j=0; j<NUM_THRESHOLD; j++) {
@@ -413,10 +442,12 @@ void initialiseToFSensors() {
       uint16_t hysterisis = NODECONFIG.read16(EEADDR(sensor[i].threshold[j].hysterisis)); // need to use read16
       uint16_t eventIndexNear = (i * NUM_THRESHOLD * 2) + (j * 2) + 0;
       uint16_t eventIndexFar = (i * NUM_THRESHOLD * 2) + (j * 2) + 1;
+      // Serial.printf("\n%6ld [initialiseToFSensors] Adding threshold %d for sensor %d: value=%d, hysterisis=%d, eventIndexNear=0x%02X, eventIndexFar=0x%02X", millis(), j, i, value, hysterisis, eventIndexNear, eventIndexFar);
       tofSensor[i]->addThreshold(j, value, hysterisis, eventIndexNear, eventIndexFar);
     }
 
     // Need to do this after all thresholds have been added.
+    // Serial.printf("\n%6ld [initialiseToFSensors] Calling initialise() for sensor %d", millis(), i);
     tofSensor[i]->initialise(muxConnected);
 
     // If this sensor is connected update the CDI data.
